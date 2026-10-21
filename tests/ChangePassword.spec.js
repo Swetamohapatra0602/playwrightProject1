@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import testData from "../testData/testData.json";
 import loginLink from "../POM/homeLoginlink.page";
 import signin from "../POM/signIn.page";
 import myAccount from "../POM/myAccount.page";
@@ -6,9 +7,9 @@ import changePassword from "../POM/changePassword.page";
 import logout from "../POM/logout.page";
 
 test("reject password change with an incorrect current password", async ({ page }) => {
-  const oldPassword = "1234";
-  const newPassword = "abcd";
-  const userEmail = "sweta12345678@gmail.com";
+  const oldPassword = testData.user.password;
+  const newPassword = testData.changePassword.newPassword;
+  const userEmail = testData.user.email;
   let loginPage = new loginLink(page);
   let SigninPage = new signin(page);
   let myAccountPage = new myAccount(page);
@@ -23,9 +24,7 @@ test("reject password change with an incorrect current password", async ({ page 
   });
 
   //launch URL
-  await page.goto(
-    "http://49.249.29.4:8081/AppServer/Online_Shopping_Application/",
-  );
+  await page.goto(testData.url);
   //login home page
   await loginPage.loginLink.click();
 
@@ -39,11 +38,11 @@ test("reject password change with an incorrect current password", async ({ page 
 
   //click on change password
   await changePasswordPage.changePWlink.click();
-  await changePasswordPage.currentPwTF.fill("wrong-password");
+  await changePasswordPage.currentPwTF.fill(testData.changePassword.invalidCurrentPassword);
   await changePasswordPage.newPwTF.fill(newPassword);
   await changePasswordPage.confirmPwTF.fill(newPassword);
   await changePasswordPage.changeButton.click();
-  await expect.poll(() => passwordError).toBe("Current Password not match !!");
+  await expect.poll(() => passwordError).toBe(testData.changePassword.expectedError);
   await expect(changePasswordPage.changePWlink).toBeVisible();
   if (!await changePasswordPage.currentPwTF.isVisible()) {
     await changePasswordPage.changePWlink.click();

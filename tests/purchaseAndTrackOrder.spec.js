@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { randomUUID } from "crypto";
 import fs from "fs";
+import path from "path";
+import testData from "../testData/testData.json";
 import loginLink from "../POM/homeLoginlink.page";
 import signin from "../POM/signIn.page";
 import signUp from "../POM/signUp.page";
@@ -16,8 +18,9 @@ import track from "../POM/trackproduct.page";
 import logout from "../POM/logout.page";
 
 test("complete a purchase and track orders", async ({ page }) => {
-  const password = "1234";
-  const userEmail = `sweta-${randomUUID()}@example.com`;
+  const { user } = testData;
+  const { billingAddress, shippingAddress, screenshots } = testData.purchaseAndTrackOrder;
+  const userEmail = `${user.emailPrefix}-${randomUUID()}@${user.emailDomain}`;
 
   page.on("dialog", async (dialog) => {
     console.log(dialog.message());
@@ -39,20 +42,18 @@ test("complete a purchase and track orders", async ({ page }) => {
   const logoutPage = new logout(page);
 
   //Register a new account for this run.
-  await page.goto(
-    "http://49.249.29.4:8081/AppServer/Online_Shopping_Application/",
-  );
+  await page.goto(testData.url);
   await loginPage.loginLink.click();
-  await signUpPage.fullName.fill("SwetaM");
+  await signUpPage.fullName.fill(user.fullName);
   await signUpPage.email.fill(userEmail);
-  await signUpPage.contactno.fill("1234567890");
-  await signUpPage.password.fill(password);
-  await signUpPage.confirmpassword.fill(password);
+  await signUpPage.contactno.fill(user.contactNumber);
+  await signUpPage.password.fill(user.password);
+  await signUpPage.confirmpassword.fill(user.password);
   await signUpPage.submitButton.click();
 
   //Sign in.
   await signInPage.email.fill(userEmail);
-  await signInPage.password.fill(password);
+  await signInPage.password.fill(user.password);
   await signInPage.loginButton.click();
 
   //Add one product from each category.
@@ -69,24 +70,24 @@ test("complete a purchase and track orders", async ({ page }) => {
   await electronicsPage.addToCart.click();
 
   //Set the billing address.
-  await shippingPage.billingaddress.fill("bangalore");
-  await shippingPage.bilingstate.fill("KT");
-  await shippingPage.billingcity.fill("Bang");
-  await shippingPage.billingpincode.fill("123456");
+  await shippingPage.billingaddress.fill(billingAddress.address);
+  await shippingPage.bilingstate.fill(billingAddress.state);
+  await shippingPage.billingcity.fill(billingAddress.city);
+  await shippingPage.billingpincode.fill(billingAddress.pincode);
   await shippingPage.updateButton.click();
 
   //Set the shipping address.
-  await billingPage.shippingaddress.fill("bangalore");
-  await billingPage.shippingstate.fill("KT");
-  await billingPage.shippingcity.fill("Bang");
-  await billingPage.shippingpincode.fill("123456");
+  await billingPage.shippingaddress.fill(shippingAddress.address);
+  await billingPage.shippingstate.fill(shippingAddress.state);
+  await billingPage.shippingcity.fill(shippingAddress.city);
+  await billingPage.shippingpincode.fill(shippingAddress.pincode);
   await billingPage.updateButton.click();
 
   //Reapply the billing address before checkout.
-  await shippingPage.billingaddress.fill("bangalore");
-  await shippingPage.bilingstate.fill("KT");
-  await shippingPage.billingcity.fill("Bang");
-  await shippingPage.billingpincode.fill("123456");
+  await shippingPage.billingaddress.fill(billingAddress.address);
+  await shippingPage.bilingstate.fill(billingAddress.state);
+  await shippingPage.billingcity.fill(billingAddress.city);
+  await shippingPage.billingpincode.fill(billingAddress.pincode);
   await shippingPage.updateButton.click();
 
   //Check out and pay using internet banking.
@@ -96,9 +97,9 @@ test("complete a purchase and track orders", async ({ page }) => {
   await paymentPage.submitButton.click();
 
   //Capture one tracking screenshot for each purchased product.
-  await expect(trackPage.trackLink).toHaveCount(4);
+  await expect(trackPage.trackLink).toHaveCount(testData.purchaseAndTrackOrder.expectedOrderCount);
   const count = await trackPage.trackLink.count();
-  fs.mkdirSync("screenshots", { recursive: true });
+  fs.mkdirSync(screenshots.folder, { recursive: true });
 
   for (let i = 0; i < count; i++) {
     const [popup] = await Promise.all([
@@ -109,7 +110,7 @@ test("complete a purchase and track orders", async ({ page }) => {
     await popup.waitForLoadState("load");
 
     await popup.screenshot({
-      path: `screenshots/track-order-${i + 1}.png`,
+      path: path.join(screenshots.folder, `${screenshots.filenamePrefix}-${i + 1}.png`),
       fullPage: true,
     });
 

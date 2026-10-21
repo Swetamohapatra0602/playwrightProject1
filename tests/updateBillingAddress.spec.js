@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import testData from "../testData/testData.json";
 import loginLink from "../POM/homeLoginlink.page";
 import signin from "../POM/signIn.page";
 import myAccount from "../POM/myAccount.page";
@@ -19,15 +20,13 @@ test("pending payment", async ({ page }) => {
   let updateBillingPage = new updateBilling(page);
 
   //launch URL
-  await page.goto(
-    "http://49.249.29.4:8081/AppServer/Online_Shopping_Application/",
-  );
+  await page.goto(testData.url);
   //login home page
   await loginPage.loginLink.click();
 
   //signIn/Login
-  await SigninPage.email.fill("sweta12345678@gmail.com");
-  await SigninPage.password.fill("1234");
+  await SigninPage.email.fill(testData.user.email);
+  await SigninPage.password.fill(testData.user.password);
   await SigninPage.loginButton.click();
 
   //click on my account
@@ -38,14 +37,14 @@ test("pending payment", async ({ page }) => {
 
   //Click on update billing
   await updateBillingPage.billingaddresslink.click();
-  await updateBillingPage.billingaddressTF.fill("Bang1");
-  await updateBillingPage.bilingstateTF.fill("KT");
-  await updateBillingPage.billingcityTF.fill("Bang1");
+  await updateBillingPage.billingaddressTF.fill(testData.updateBillingAddress.billingAddress.address);
+  await updateBillingPage.bilingstateTF.fill(testData.updateBillingAddress.billingAddress.state);
+  await updateBillingPage.billingcityTF.fill(testData.updateBillingAddress.billingAddress.city);
   await updateBillingPage.updateButton.click();
 
   //make sure the billing adress is updated now
   await page.reload();
-  await expect(updateBillingPage.billingaddressTF).toHaveValue("Bang1");
-  await expect(updateBillingPage.bilingstateTF).toHaveValue("KT");
-  await expect(updateBillingPage.billingcityTF).toHaveValue("Bang1");
+  await expect(updateBillingPage.billingaddressTF).toHaveValue(testData.updateBillingAddress.billingAddress.address);
+  await expect(updateBillingPage.bilingstateTF).toHaveValue(testData.updateBillingAddress.billingAddress.state);
+  await expect(updateBillingPage.billingcityTF).toHaveValue(testData.updateBillingAddress.billingAddress.city);
 });

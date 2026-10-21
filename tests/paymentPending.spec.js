@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import testData from "../testData/testData.json";
 import loginLink from "../POM/homeLoginlink.page";
 import signin from "../POM/signIn.page";
 import Book from "../POM/book.page";
@@ -21,15 +22,13 @@ test("pending payment", async ({ page }) => {
   let myAccountPage = new myAccount(page);
 
   //launch URL
-  await page.goto(
-    "http://49.249.29.4:8081/AppServer/Online_Shopping_Application/",
-  );
+  await page.goto(testData.url);
   //login home page
   await loginPage.loginLink.click();
 
   //signIn/Login
-  await SigninPage.email.fill("sweta12345678@gmail.com");
-  await SigninPage.password.fill("1234");
+  await SigninPage.email.fill(testData.user.email);
+  await SigninPage.password.fill(testData.user.password);
   await SigninPage.loginButton.click();
 
   //book(choose category,click on add to cart for first element)
@@ -53,10 +52,10 @@ test("pending payment", async ({ page }) => {
   await myAccountPage.PaymentPendingLink.click();
 
   //It should show the product
-  await expect(page).toHaveURL(/\/pending-orders\.php$/);
+  await expect(page).toHaveURL(new URL(testData.paymentPending.pendingOrdersPath, testData.url).href);
   let x = page
     .getByRole("heading", {
-      name: "The Wimpy Kid Do -It- Yourself Book",
+      name: testData.paymentPending.productName,
       exact: true,
     })
     .last();
