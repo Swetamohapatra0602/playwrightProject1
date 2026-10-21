@@ -1,63 +1,67 @@
-import {test,expect} from "@playwright/test";
-import loginLink from  '../POM/homeLoginlink.page'
-import signin from '../POM/signIn.page'
+import { test, expect } from "@playwright/test";
+import loginLink from "../POM/homeLoginlink.page";
+import signin from "../POM/signIn.page";
 import myAccount from "../POM/myAccount.page";
 import changePassword from "../POM/changePassword.page";
 import logout from "../POM/logout.page";
 
+test("reject password change with an incorrect current password", async ({ page }) => {
+  const oldPassword = "1234";
+  const newPassword = "abcd";
+  const userEmail = "sweta12345678@gmail.com";
+  let loginPage = new loginLink(page);
+  let SigninPage = new signin(page);
+  let myAccountPage = new myAccount(page);
+  let changePasswordPage = new changePassword(page);
+  let logoutPage = new logout(page);
+  let passwordError = "";
 
-test("change Password",async({page})=>{
-    //here we are loggin in using already saved login,shipping and billing.
-    // we will go to checkout and then click myaccount and go to payment pending page.there the product should be shown
+  page.on("dialog", async (dialog) => {
+    passwordError = dialog.message();
+    console.log(await dialog.message());
+    await dialog.accept();
+  });
 
-page.on("dialog",async(dialog)=>{
-    console.log(await dialog.message())
-    await dialog.accept()
-})
+  //launch URL
+  await page.goto(
+    "http://49.249.29.4:8081/AppServer/Online_Shopping_Application/",
+  );
+  //login home page
+  await loginPage.loginLink.click();
 
-let loginPage=new loginLink(page) 
-let SigninPage=new signin(page)
-let myAccountPage=new myAccount(page)
-let changePasswordPage=new changePassword(page)
-let logoutPage=new logout(page)
+  //signIn/Login
+  await SigninPage.email.fill(userEmail);
+  await SigninPage.password.fill(oldPassword);
+  await SigninPage.loginButton.click();
 
-//launch URL
-await page.goto("http://49.249.29.4:8081/AppServer/Online_Shopping_Application/")
-//login home page
-await loginPage.loginLink.click()
+  //click on my account on homepage
+  await myAccountPage.myAccountHome.click();
 
+  //click on change password
+  await changePasswordPage.changePWlink.click();
+  await changePasswordPage.currentPwTF.fill("wrong-password");
+  await changePasswordPage.newPwTF.fill(newPassword);
+  await changePasswordPage.confirmPwTF.fill(newPassword);
+  await changePasswordPage.changeButton.click();
+  await expect.poll(() => passwordError).toBe("Current Password not match !!");
+  await expect(changePasswordPage.changePWlink).toBeVisible();
+  if (!await changePasswordPage.currentPwTF.isVisible()) {
+    await changePasswordPage.changePWlink.click();
+  }
+  await expect(changePasswordPage.currentPwTF).toBeVisible();
 
-//signIn/Login
-await SigninPage.email.fill("sweta12345678@gmail.com")
-await SigninPage.password.fill("1234")
-await SigninPage.loginButton.click()
+  //now logout
+  await logoutPage.logoutLink.click();
 
-//click on my account on homepage
-await myAccountPage.myAccountHome.click()
+  //now login to home page again
+  await loginPage.loginLink.click();
 
-//click on change password
-await changePasswordPage.changePWlink.click()
-await changePasswordPage.currentPwTF.fill("1234")
-await changePasswordPage.newPwTF.fill("1234")
-await changePasswordPage.confirmPwTF.fill("1234")
-await changePasswordPage.changeButton.click()
+  //The original password should still work after the rejected change.
+  await SigninPage.email.fill(userEmail);
+  await SigninPage.password.fill(oldPassword);
+  await SigninPage.loginButton.click();
 
-
-//now logout
-await logoutPage.logoutLink.click()
-
-//now login to home page again 
-await loginPage.loginLink.click()
-
-
-//signin/Login using new password
-await SigninPage.email.fill("sweta12345678@gmail.com")
-await SigninPage.password.fill("1234")
-await SigninPage.loginButton.click()
-
-//You should be able to login and homepage should be displayed
-//logout link should be there
-let xyz=await logoutPage.logoutLink
-await expect(xyz).tobeVisible()
-
-})
+  //You should be able to login and homepage should be displayed
+  //logout link should be there
+  await expect(logoutPage.logoutLink).toBeVisible();
+});
